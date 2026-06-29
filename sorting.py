@@ -12,7 +12,6 @@ uploaded_file = st.file_uploader(
     type=["xls", "xlsx"]
 )
 
-
 def find_header(sheet):
     for i, row in sheet.iterrows():
         vals = [str(v).strip().lower() for v in row.values]
@@ -69,26 +68,21 @@ def process_sheet(uploaded_file):
         .fillna(0)
         .astype(int)
     )
-
-    # Helper column for sorting (Month-Day)
-    df["Sort_Date"] = df["Date"].dt.strftime("%m-%d")
-
+    #Taking Which year to select from the user
+    available_years=sorted(df['Date'].dt.year.unique())
+    selected_year=st.selectbox("Select Year",available_years)
+    year_df=df[df['Date'].dt.year==selected_year].copy()
+    #Taking which month to select
+    available_months = (year_df["Date"].dt.strftime("%B").unique())
+    selected_month=st.selectbox("Select Month",available_months)
+    sorted_df=year_df[year_df['Date'].dt.month_name()==selected_month].copy()
+    
     # Sort
-    df = (
-        df.sort_values(
-            by=["Sort_Date", "Shift"],
-            ascending=[True, True]
-        )
-        .reset_index(drop=True)
-    )
-
+    sorted_df = (sorted_df.sort_values(["Date", "Shift"]).reset_index(drop=True))
     # Convert back for display
-    df["Date"] = df["Date"].dt.strftime("%d-%b")
+    sorted_df["Date"] = sorted_df["Date"].dt.strftime("%d-%b")
 
-    # Remove helper column
-    df.drop(columns=["Sort_Date"], inplace=True)
-
-    return df
+    return sorted_df
 
 
 if uploaded_file is not None:
